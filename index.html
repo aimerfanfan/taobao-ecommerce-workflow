@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>淘宝电商工作流助手</title>
+    <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+    <link rel="stylesheet" href="https://fonts.googlefonts.cn/css2?family=Noto+Sans+SC:wght@400;700&display=swap">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+</head>
+<body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen font-sans">
+    <div class="container mx-auto px-4 py-8">
+        <!-- 头部 -->
+        <header class="text-center mb-8">
+            <h1 class="text-4xl font-bold text-gray-800 mb-4">
+                <i class="fas fa-shopping-cart text-blue-600 mr-3"></i>
+                淘宝电商工作流助手
+            </h1>
+            <p class="text-lg text-gray-600">自动抓取产品信息，生成营销图片，提升运营效率</p>
+        </header>
+
+        <!-- 主要内容区 -->
+        <div class="max-w-4xl mx-auto">
+            <!-- 输入区域 -->
+            <div class="bg-white rounded-lg shadow-lg p-6 mb-6">
+                <h2 class="text-2xl font-semibold text-gray-800 mb-4">
+                    <i class="fas fa-link text-green-600 mr-2"></i>
+                    产品链接输入
+                </h2>
+                <div class="flex gap-4">
+                    <input type="text" id="product-url" 
+                           placeholder="请输入淘宝产品链接 (例如: https://item.taobao.com/item.htm?id=123456789)"
+                           class="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    <button id="start-btn" 
+                            class="px-8 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-semibold">
+                        <i class="fas fa-play mr-2"></i>开始处理
+                    </button>
+                </div>
+            </div>
+
+            <!-- 配置区域 -->
+            <div class="grid md:grid-cols-2 gap-6 mb-6">
+                <!-- 图片生成选项 -->
+                <div class="bg-white rounded-lg shadow-lg p-6">
+                    <h3 class="text-xl font-semibold text-gray-800 mb-4">
+                        <i class="fas fa-image text-purple-600 mr-2"></i>
+                        图片生成选项
+                    </h3>
+                    <div class="space-y-3">
+                        <label class="flex items-center">
+                            <input type="checkbox" id="main-image" checked class="mr-3 text-blue-600">
+                            <span>主图生成</span>
+                            <select id="main-image-template" class="ml-auto px-2 py-1 border rounded">
+                                <option value="template1">简约风格</option>
+                                <option value="template2">活力风格</option>
+                                <option value="template3">高端风格</option>
+                            </select>
+                        </label>
+                        <label class="flex items-center">
+                            <input type="checkbox" id="spec-image" checked class="mr-3 text-blue-600">
+                            <span>规格图生成</span>
+                            <select id="spec-image-template" class="ml-auto px-2 py-1 border rounded">
+                                <option value="template1">表格式</option>
+                                <option value="template2">卡片式</option>
+                                <option value="template3">对比式</option>
+                            </select>
+                        </label>
+                        <label class="flex items-center">
+                            <input type="checkbox" id="detail-image" checked class="mr-3 text-blue-600">
+                            <span>详情图生成</span>
+                            <select id="detail-image-template" class="ml-auto px-2 py-1 border rounded">
+                                <option value="template1">图文结合</option>
+                                <option value="template2">功能展示</option>
+                                <option value="template3">场景应用</option>
+                            </select>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- 保存设置 -->
+                <div class="bg-white rounded-lg shadow-lg p-6">
+                    <h3 class="text-xl font-semibold text-gray-800 mb-4">
+                        <i class="fas fa-save text-orange-600 mr-2"></i>
+                        保存设置
+                    </h3>
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">保存路径</label>
+                            <input type="text" id="save-path" value="D:/淘宝产品素材"
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">文件命名</label>
+                            <select id="file-naming" class="w-full px-3 py-2 border border-gray-300 rounded-lg">
+                                <option value="productid">产品ID</option>
+                                <option value="productname">产品名称</option>
+                                <option value="datetime">日期时间</option>
+                                <option value="custom">自定义</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 进度显示 -->
+            <div id="progress-container" class="bg-white rounded-lg shadow-lg p-6 mb-6 hidden">
+                <h3 class="text-xl font-semibold text-gray-800 mb-4">处理进度</h3>
+                <div class="space-y-4">
+                    <div>
+                        <div class="flex justify-between text-sm text-gray-600 mb-1">
+                            <span>产品信息抓取</span>
+                            <span id="crawl-percentage">0%</span>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-2">
+                            <div id="crawl-progress" class="bg-blue-600 h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="flex justify-between text-sm text-gray-600 mb-1">
+                            <span>图片生成</span>
+                            <span id="generate-percentage">0%</span>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-2">
+                            <div id="generate-progress" class="bg-green-600 h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="flex justify-between text-sm text-gray-600 mb-1">
+                            <span>文件保存</span>
+                            <span id="save-percentage">0%</span>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-2">
+                            <div id="save-progress" class="bg-purple-600 h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 结果显示 -->
+            <div id="result-container" class="bg-white rounded-lg shadow-lg p-6 hidden">
+                <h3 class="text-xl font-semibold text-gray-800 mb-4">生成结果</h3>
+                <div class="grid md:grid-cols-3 gap-6">
+                    <div class="text-center">
+                        <div class="bg-blue-100 rounded-lg p-4 mb-2">
+                            <i class="fas fa-image text-3xl text-blue-600 mb-2"></i>
+                            <div class="text-2xl font-bold text-blue-800" id="main-image-count">0</div>
+                            <div class="text-sm text-blue-600">主图</div>
+                        </div>
+                    </div>
+                    <div class="text-center">
+                        <div class="bg-green-100 rounded-lg p-4 mb-2">
+                            <i class="fas fa-list-alt text-3xl text-green-600 mb-2"></i>
+                            <div class="text-2xl font-bold text-green-800" id="spec-image-count">0</div>
+                            <div class="text-sm text-green-600">规格图</div>
+                        </div>
+                    </div>
+                    <div class="text-center">
+                        <div class="bg-purple-100 rounded-lg p-4 mb-2">
+                            <i class="fas fa-file-image text-3xl text-purple-600 mb-2"></i>
+                            <div class="text-2xl font-bold text-purple-800" id="detail-image-count">0</div>
+                            <div class="text-sm text-purple-600">详情图</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 操作按钮 -->
+                <div class="flex gap-4 mt-6 justify-center">
+                    <button id="open-folder-btn" class="px-6 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700">
+                        <i class="fas fa-folder-open mr-2"></i>打开文件夹
+                    </button>
+                    <button id="download-all-btn" class="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">
+                        <i class="fas fa-download mr-2"></i>下载全部图片
+                    </button>
+                    <button id="export-btn" class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                        <i class="fas fa-cloud-upload-alt mr-2"></i>导出到网盘
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 模态框 -->
+    <div id="modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center hidden z-50">
+        <div class="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+            <h3 id="modal-title" class="text-lg font-semibold mb-4"></h3>
+            <p id="modal-content" class="text-gray-600 mb-6"></p>
+            <div class="flex gap-3 justify-end">
+                <button id="modal-close" class="px-4 py-2 bg-gray-300 text-gray-700 rounded hover:bg-gray-400">
+                    关闭
+                </button>
+                <button id="modal-confirm" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+                    确定
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 简化版JavaScript功能
+        class TaobaoWorkflow {
+            constructor() {
+                this.initEventListeners();
+                this.loadConfig();
+            }
+
+            initEventListeners() {
+                document.getElementById('start-btn').addEventListener('click', () => this.startProcess());
+                document.getElementById('modal-close').addEventListener('click', () => this.hideModal());
+                document.getElementById('modal-confirm').addEventListener('click', () => this.hideModal());
+                document.getElementById('download-all-btn').addEventListener('click', () => this.downloadDemo());
+                document.getElementById('open-folder-btn').addEventListener('click', () => this.showModal('文件夹位置', '文件已保存在您设置的路径中'));
+                document.getElementById('export-btn').addEventListener('click', () => this.showModal('导出功能', '网盘导出功能开发中，敬请期待！'));
+            }
+
+            loadConfig() {
+                const saved = localStorage.getItem('taobaoWorkflowConfig');
+                if (saved) {
+                    const config = JSON.parse(saved);
+                    document.getElementById('save-path').value = config.savePath || 'D:/淘宝产品素材';
+                }
+            }
+
+            saveConfig() {
+                const config = {
+                    savePath: document.getElementById('save-path').value,
+                    fileNaming: document.getElementById('file-naming').value
+                };
+                localStorage.setItem('taobaoWorkflowConfig', JSON.stringify(config));
+            }
+
+            async startProcess() {
+                const url = document.getElementById('product-url').value;
+                if (!url) {
+                    this.showModal('错误', '请输入有效的产品链接');
+                    return;
+                }
+
+                this.saveConfig();
+                document.getElementById('progress-container').classList.remove('hidden');
+                document.getElementById('result-container').classList.add('hidden');
+
+                // 模拟处理过程
+                await this.simulateProgress('crawl', '产品信息抓取中...');
+                await this.simulateProgress('generate', '图片生成中...');
+                await this.simulateProgress('save', '文件保存中...');
+
+                // 显示结果
+                document.getElementById('result-container').classList.remove('hidden');
+                document.getElementById('main-image-count').textContent = '5';
+                document.getElementById('spec-image-count').textContent = '3';
+                document.getElementById('detail-image-count').textContent = '8';
+
+                this.showModal('处理完成', '产品信息已抓取，共生成16张图片！这是演示版本，实际功能需要后端支持。');
+            }
+
+            async simulateProgress(type, message) {
+                const progressBar = document.getElementById(type + '-progress');
+                const percentage = document.getElementById(type + '-percentage');
+                
+                for (let i = 0; i <= 100; i += 10) {
+                    progressBar.style.width = i + '%';
+                    percentage.textContent = i + '%';
+                    await new Promise(resolve => setTimeout(resolve, 100));
+                }
+            }
+
+            downloadDemo() {
+                // 创建演示文件
+                const demoContent = `淘宝电商工作流助手 - 演示文件
+
+这是一个演示文件，展示下载功能。
+
+生成时间: ${new Date().toLocaleString()}
+产品链接: ${document.getElementById('product-url').value}
+
+注意：这是前端演示版本，实际的产品信息抓取和图片生成需要后端支持。
+
+功能说明：
+- 产品信息抓取：需要后端爬虫服务
+- 图片生成：需要图像处理服务
+- 文件保存：当前为浏览器下载
+
+如需完整功能，请联系开发者进行定制开发。`;
+
+                const blob = new Blob([demoContent], { type: 'text/plain;charset=utf-8' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = '淘宝工作流演示文件.txt';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+
+                this.showModal('下载完成', '演示文件已下载！实际使用时会生成真实的产品图片。');
+            }
+
+            showModal(title, content) {
+                document.getElementById('modal-title').textContent = title;
+                document.getElementById('modal-content').textContent = content;
+                document.getElementById('modal').classList.remove('hidden');
+            }
+
+            hideModal() {
+                document.getElementById('modal').classList.add('hidden');
+            }
+        }
+
+        // 初始化应用
+        document.addEventListener('DOMContentLoaded', () => {
+            new TaobaoWorkflow();
+        });
+
+        // 添加快捷键支持
+        document.addEventListener('keydown', (e) => {
+            if (e.ctrlKey && e.shiftKey && e.key === 'D') {
+                e.preventDefault();
+                alert('演示模式：这是一个前端演示版本，展示了工具的界面和基本交互。实际的产品抓取和图片生成功能需要后端支持。');
+            }
+        });
+    </script>
+</body>
+</html>
